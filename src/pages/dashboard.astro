@@ -83,7 +83,7 @@ const actIcon: Record<string, string> = {
       <div class="panel__head">
         <div>
           <h2>Distribución de muestras por enfermedad</h2>
-          <span class="panel__sub" id="dist-sub">Top 6 · este mes</span>
+          <span class="panel__sub" id="dist-sub">Por enfermedad · este mes</span>
         </div>
         <div class="seg">
           <button class="seg__btn is-active" data-series="mes">Mes</button>
@@ -387,7 +387,7 @@ const actIcon: Record<string, string> = {
       if (fill) fill.style.width = `${(v / max) * 100}%`;
       if (val) val.textContent = String(v);
     });
-    if (sub) sub.textContent = series === "mes" ? "Top 6 · este mes" : "Top 6 · red completa";
+    if (sub) sub.textContent = series === "mes" ? "Por enfermedad · este mes" : "Por enfermedad · red completa";
   }
 
   segBtns.forEach((b) =>

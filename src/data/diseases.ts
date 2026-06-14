@@ -590,6 +590,81 @@ export const diseases: Disease[] = [
       { title: "FBN1 genotype-phenotype correlations and aortic risk", authors: "Arnaud P. et al.", journal: "Circulation", year: 2025, type: "Cohorte" },
     ],
   },
+
+  // ===== 7. Síndrome de Down (Trisomía 21) ====================================
+  {
+    slug: "down",
+    nombre: "Síndrome de Down",
+    orpha: "870",
+    icd10: "Q90",
+    cromosoma: "21 (trisomía)",
+    prevalencia: "1 / 700 nacimientos",
+    categoria: "Cromosómica",
+    resumen:
+      "Trisomía del cromosoma 21: una copia extra total o parcial del cromosoma 21 que causa discapacidad intelectual y rasgos físicos característicos. Es la cromosomopatía más frecuente.",
+    gene: {
+      gen: "HSA21 · DSCR",
+      cromosoma: "21",
+      locus: "21q22.13",
+      herencia: "Esporádica (no disyunción)",
+      omim: "190685",
+    },
+    clinical: [
+      { sev: "alta", label: "Discapacidad intelectual", desc: "De grado variable (leve a moderado); afecta sobre todo al lenguaje expresivo y al aprendizaje." },
+      { sev: "alta", label: "Cardiopatía congénita", desc: "Presente en ~40–50%; el defecto del septo auriculoventricular es el más característico." },
+      { sev: "media", label: "Hipotonía neonatal", desc: "Tono muscular disminuido al nacer; condiciona el desarrollo motor y la alimentación." },
+      { sev: "media", label: "Rasgos craneofaciales", desc: "Epicanto, puente nasal plano, braquicefalia y protrusión lingual." },
+      { sev: "alta", label: "Comorbilidades sistémicas", desc: "Riesgo aumentado de hipotiroidismo, leucemia infantil y enfermedad de Alzheimer precoz." },
+    ],
+    treatments: [
+      { name: "Atención temprana / estimulación", phase: "Estándar de cuidado", status: "approved", note: "Programas multidisciplinares que mejoran el desarrollo cognitivo y motor." },
+      { name: "Corrección quirúrgica cardíaca", phase: "Estándar de cuidado", status: "approved", note: "Reparación de los defectos del septo AV, habitualmente en el primer año de vida." },
+      { name: "Moduladores cognitivos (GABA-A)", phase: "Fase II", status: "trial", note: "Antagonistas selectivos en estudio para mejorar la función ejecutiva." },
+      { name: "Silenciamiento del cromosoma extra (XIST)", phase: "Preclínico", status: "trial", note: "Inactivación del cromosoma 21 supernumerario en líneas celulares." },
+    ],
+    variants: [
+      { hgvs: "47,XX,+21", protein: "Trisomía libre", type: "No disyunción", freq: "0.95", patho: "Causal" },
+      { hgvs: "46,XX,t(14;21)", protein: "Translocación", type: "Robertsoniana", freq: "0.030", patho: "Causal" },
+      { hgvs: "46/47,+21", protein: "Mosaicismo", type: "Error mitótico", freq: "0.020", patho: "Causal" },
+      { hgvs: "46,XX,t(21;21)", protein: "Translocación", type: "Isocromosoma", freq: "0.005", patho: "Causal" },
+    ],
+    diagnosis: {
+      criterios: [
+        { title: "Cribado prenatal combinado", desc: "Translucencia nucal ecográfica más bioquímica del primer trimestre estiman el riesgo." },
+        { title: "Test prenatal no invasivo (NIPT)", desc: "ADN fetal libre en plasma materno con alta sensibilidad para trisomía 21." },
+        { title: "Confirmación citogenética", desc: "Cariotipo (o QF-PCR/FISH) en amniocentesis, biopsia corial o sangre neonatal." },
+        { title: "Valoración clínica postnatal", desc: "Rasgos dismórficos e hipotonía orientan el diagnóstico antes de la confirmación." },
+      ],
+      pruebas: [
+        "NIPT (ADN fetal libre, cfDNA)",
+        "Cariotipo de linfocitos",
+        "QF-PCR / FISH para trisomía 21",
+        "Ecocardiograma neonatal",
+        "Cribado tiroideo y hematológico",
+      ],
+      callout: "Tiempo medio a la confirmación en la red: 1,5 meses; el NIPT se ofrece en el 100% de las gestaciones de riesgo.",
+    },
+    sourcing: [
+      { name: "Kit QF-PCR aneuploidías", spec: "Cromosomas 13/18/21/X/Y · 50 muestras", cat: "Kits PCR", lab: "GenoTech Iberia", stock: "disponible" },
+      { name: "Sondas FISH cromosoma 21", spec: "Locus 21q22 · marcaje fluorescente", cat: "Reactivos", lab: "Thermo Fisher", stock: "bajo" },
+      { name: "Medio de cultivo de linfocitos", spec: "Cariotipo · PHA · 100 mL", cat: "Reactivos", lab: "Roche Diagnostics", stock: "disponible" },
+      { name: "Kit extracción ADN fetal (cfDNA)", spec: "Plasma materno · 2 mL · 50 prep", cat: "Kits PCR", lab: "Qiagen Iberia", stock: "disponible" },
+      { name: "Portaobjetos citogenética", spec: "Esmerilados · grado óptico · pack 100", cat: "Materiales", lab: "LabWare BCN", stock: "disponible" },
+      { name: "Aguja de amniocentesis", spec: "22G · ecoguiada · estéril · individual", cat: "Implementos quirúrgicos", lab: "MedSurg Supplies", stock: "pedido" },
+    ],
+    samples: [
+      { biobank: "Biobanco La Paz", city: "Madrid", type: "ADN · Linfocitos", n: 96, avail: "disponible" },
+      { biobank: "Biobanco IDIBELL", city: "Barcelona", type: "Fibroblastos · iPSC", n: 64, avail: "disponible" },
+      { biobank: "Biobanco IBSAL", city: "Salamanca", type: "Plasma materno (cfDNA)", n: 52, avail: "bajo" },
+      { biobank: "BioBank Navarra", city: "Pamplona", type: "Línea celular", n: 33, avail: "pedido" },
+    ],
+    papers: [
+      { title: "Prenatal cell-free DNA screening for trisomy 21: a performance review", authors: "Gil M. et al.", journal: "Ultrasound Obstet. Gynecol.", year: 2024, type: "Revisión" },
+      { title: "Congenital heart disease outcomes in Down syndrome cohorts", authors: "Bull M. et al.", journal: "Pediatrics", year: 2023, type: "Cohorte" },
+      { title: "XIST-mediated silencing of trisomy 21 in pluripotent stem cells", authors: "Jiang J. et al.", journal: "Nature", year: 2025, type: "Preclínico" },
+      { title: "Alzheimer's disease biomarkers in adults with Down syndrome", authors: "Fortea J. et al.", journal: "The Lancet Neurology", year: 2024, type: "Cohorte" },
+    ],
+  },
 ];
 
 // -----------------------------------------------------------------------------
