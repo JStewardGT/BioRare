@@ -1,0 +1,201 @@
+---
+import AppShell from "../components/AppShell.astro";
+import { listDiseases, stockMeta, formatNum } from "../data/diseases";
+import type { StockState } from "../data/diseases";
+
+const base = import.meta.env.BASE_URL.replace(/\/?$/, "/");
+const all = listDiseases();
+
+// Agrega las muestras de todas las fichas por biobanco.
+interface BankAgg {
+  biobank: string;
+  city: string;
+  total: number;
+  available: number;
+  diseases: Set<string>;
+}
+const bankMap = new Map<string, BankAgg>();
+for (const d of all) {
+  for (const s of d.samples) {
+    let e = bankMap.get(s.biobank);
+    if (!e) {
+      e = { biobank: s.biobank, city: s.city, total: 0, available: 0, diseases: new Set() };
+      bankMap.set(s.biobank, e);
+    }
+    e.total += s.n;
+    if (s.avail === "disponible") e.available += s.n;
+    e.diseases.add(d.nombre);
+  }
+}
+const banks = [...bankMap.values()].sort((a, b) => b.total - a.total);
+
+const totalMuestras = banks.reduce((a, b) => a + b.total, 0);
+const totalDisp = banks.reduce((a, b) => a + b.available, 0);
+
+// Estado de cada biobanco a partir de su % disponible.
+function bankState(b: BankAgg): StockState {
+  const pct = b.available / b.total;
+  if (pct >= 0.6) return "disponible";
+  if (pct >= 0.3) return "bajo";
+  return "pedido";
+}
+---
+
+<AppShell
+  active="biobanco"
+  role="Hospital"
+  crumbs={[{ label: "Inicio", href: base }, { label: "Biobanco" }]}
+  title="Biobanco · BioRare"
+>
+  <div class="page-head">
+    <div>
+      <h1>Biobancos de la red</h1>
+      <p>Muestras agregadas por institución a lo largo de todas las enfermedades catalogadas.</p>
+    </div>
+  </div>
+
+  <!-- Resumen -->
+  <section class="metrics">
+    <article class="metric"><span class="metric__label">Biobancos integrados</span><span class="metric__value">{banks.length}</span></article>
+    <article class="metric metric--ink"><span class="metric__label">Muestras totales</span><span class="metric__value">{formatNum(totalMuestras)}</span></article>
+    <article class="metric metric--green"><span class="metric__label">Disponibles ahora</span><span class="metric__value">{formatNum(totalDisp)}</span></article>
+    <article class="metric"><span class="metric__label">Enfermedades cubiertas</span><span class="metric__value">{all.length}</span></article>
+  </section>
+
+  <!-- Tabla de biobancos -->
+  <article class="card supply-card">
+    <table class="supply-table">
+      <thead>
+        <tr>
+          <th>Biobanco</th>
+          <th>Ubicación</th>
+          <th>Enfermedades</th>
+          <th>Muestras</th>
+          <th>Disponibles</th>
+          <th>Estado</th>
+        </tr>
+      </thead>
+      <tbody>
+        {
+          banks.map((b) => (
+            <tr>
+              <td><strong>{b.biobank}</strong></td>
+              <td>{b.city}</td>
+              <td class="mono">{b.diseases.size}</td>
+              <td class="mono">{b.total}</td>
+              <td class="mono">{b.available}</td>
+              <td>
+                <span class={`chip ${stockMeta[bankState(b)].chip}`}>
+                  <span class="dot" style="background:currentColor"></span>
+                  {stockMeta[bankState(b)].text}
+                </span>
+              </td>
+            </tr>
+          ))
+        }
+      </tbody>
+    </table>
+  </article>
+  <p class="note">
+    Vista agregada de demostración: el estado se estima a partir del porcentaje de muestras
+    marcadas como disponibles en cada institución.
+  </p>
+</AppShell>
+
+<style>
+  .page-head {
+    margin-bottom: 22px;
+  }
+  .page-head h1 {
+    font-size: 1.7rem;
+  }
+  .page-head p {
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  .metrics {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 22px;
+  }
+  .metric {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    padding: 20px 22px;
+    box-shadow: var(--shadow-sm);
+    position: relative;
+    overflow: hidden;
+  }
+  .metric::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: var(--border-strong);
+  }
+  .metric--ink::before { background: var(--ink); }
+  .metric--green::before { background: var(--green); }
+  .metric__label {
+    font-size: 0.86rem;
+    color: var(--muted);
+    font-weight: 500;
+  }
+  .metric__value {
+    display: block;
+    font-size: 2.1rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    margin-top: 8px;
+  }
+
+  .supply-card {
+    padding: 6px;
+    overflow-x: auto;
+  }
+  .supply-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 680px;
+  }
+  .supply-table th {
+    text-align: left;
+    font-size: 0.74rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--muted);
+    font-weight: 600;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .supply-table td {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.9rem;
+  }
+  .supply-table tbody tr:last-child td {
+    border-bottom: none;
+  }
+  .supply-table tbody tr:hover {
+    background: var(--cream);
+  }
+  .mono {
+    font-family: var(--font-mono);
+  }
+  .note {
+    margin-top: 14px;
+    font-size: 0.84rem;
+    color: var(--muted);
+    max-width: 640px;
+  }
+
+  @media (max-width: 700px) {
+    .metrics {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+</style>

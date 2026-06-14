@@ -1,0 +1,423 @@
+---
+import Layout from "../layouts/Layout.astro";
+import Logo from "./Logo.astro";
+
+interface Crumb {
+  label: string;
+  href?: string;
+}
+interface Props {
+  active: "dashboard" | "buscador" | "biobanco" | "cooperacion" | "alertas";
+  role?: "Hospital" | "Laboratorio" | "Universidad";
+  crumbs: Crumb[];
+  title?: string;
+}
+
+const { active, role = "Hospital", crumbs, title } = Astro.props;
+// Normaliza la base para que siempre acabe en una sola "/" (Astro puede
+// devolverla sin barra final, lo que rompería los enlaces: /BioRaredashboard).
+const base = import.meta.env.BASE_URL.replace(/\/?$/, "/");
+
+const nav = [
+  { id: "dashboard", label: "Dashboard", href: base + "dashboard", icon: "grid" },
+  { id: "buscador", label: "Buscador", href: base + "buscador", icon: "search" },
+  { id: "biobanco", label: "Biobanco", href: base + "biobanco", icon: "vial" },
+  { id: "cooperacion", label: "Cooperación", href: base + "cooperacion", icon: "share" },
+  { id: "alertas", label: "Alertas", href: base + "alertas", icon: "bell" },
+];
+
+const roleMeta = {
+  Hospital: { color: "var(--coral)", desc: "Centro clínico verificado" },
+  Laboratorio: { color: "var(--teal)", desc: "Proveedor de diagnóstico" },
+  Universidad: { color: "var(--amber-deep)", desc: "Investigación traslacional" },
+} as const;
+
+// Iconos de línea (SVG inline, sin dependencias).
+function icon(name: string): string {
+  const s =
+    'fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"';
+  const paths: Record<string, string> = {
+    grid: `<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>`,
+    search: `<circle cx="11" cy="11" r="7"/><path d="m21 21-4-4"/>`,
+    vial: `<path d="M8 2h8M9 2v14a3 3 0 0 0 6 0V2M8 9h8"/>`,
+    share: `<circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M8.2 10.8 15.8 7.2M8.2 13.2l7.6 3.6"/>`,
+    bell: `<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0"/>`,
+  };
+  return `<svg width="19" height="19" viewBox="0 0 24 24" ${s}>${paths[name] ?? ""}</svg>`;
+}
+---
+
+<Layout title={title}>
+  <div class="shell">
+    <!-- ============ SIDEBAR ============ -->
+    <aside class="sidebar">
+      <div class="sidebar__top">
+        <Logo />
+      </div>
+
+      <nav class="sidebar__nav" aria-label="Navegación de la aplicación">
+        {
+          nav.map((item) => (
+            <a
+              href={item.href}
+              class={`snav ${active === item.id ? "is-active" : ""}`}
+              aria-current={active === item.id ? "page" : undefined}
+            >
+              <span class="snav__icon" aria-hidden="true" set:html={icon(item.icon)} />
+              <span>{item.label}</span>
+              {item.id === "alertas" && <span class="snav__badge">3</span>}
+            </a>
+          ))
+        }
+      </nav>
+
+      <div class="sidebar__role">
+        <span class="sidebar__role-label">Rol activo</span>
+        <div class="role-card">
+          <span class="role-card__dot" style={`background:${roleMeta[role].color}`}></span>
+          <div>
+            <strong>{role}</strong>
+            <small>{roleMeta[role].desc}</small>
+          </div>
+          <button class="role-card__switch" aria-label="Cambiar rol">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 15 5 5 5-5M7 9l5-5 5 5"/></svg>
+          </button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ============ ÁREA PRINCIPAL ============ -->
+    <div class="main">
+      <!-- TOPBAR -->
+      <header class="topbar">
+        <nav class="crumbs" aria-label="Ruta">
+          {
+            crumbs.map((c, i) => (
+              <>
+                {c.href ? <a href={c.href}>{c.label}</a> : <span>{c.label}</span>}
+                {i < crumbs.length - 1 && <span class="crumbs__sep">/</span>}
+              </>
+            ))
+          }
+        </nav>
+
+        <div class="topbar__actions">
+          <form class="topsearch" action={base + "buscador"} method="get" role="search">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4-4"/></svg>
+            <input type="search" name="q" placeholder="Buscar enfermedad, código, muestra…" aria-label="Buscar enfermedad" />
+            <kbd>⌘K</kbd>
+          </form>
+          <button class="iconbtn" aria-label="Notificaciones">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+            <span class="iconbtn__dot"></span>
+          </button>
+        </div>
+      </header>
+
+      <main class="content">
+        <slot />
+      </main>
+    </div>
+  </div>
+</Layout>
+
+<script>
+  // ⌘K / Ctrl+K enfoca la búsqueda del topbar.
+  const tb = document.querySelector<HTMLInputElement>('.topsearch input[name="q"]');
+  window.addEventListener("keydown", (e) => {
+    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+      e.preventDefault();
+      tb?.focus();
+    }
+  });
+</script>
+
+<style>
+  .shell {
+    display: grid;
+    grid-template-columns: var(--sidebar-w) 1fr;
+    min-height: 100vh;
+  }
+
+  /* ----- Sidebar ----- */
+  .sidebar {
+    position: sticky;
+    top: 0;
+    align-self: start;
+    height: 100vh;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    padding: 22px 16px;
+  }
+  .sidebar__top {
+    padding: 4px 8px 22px;
+  }
+  .sidebar__nav {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+  }
+  .snav {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 14px;
+    border-radius: var(--r-md);
+    color: var(--ink-soft);
+    font-weight: 500;
+    font-size: 0.95rem;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+  .snav__icon {
+    display: grid;
+    place-items: center;
+    color: var(--muted);
+  }
+  .snav:hover {
+    background: var(--cream);
+    color: var(--ink);
+  }
+  .snav.is-active {
+    background: var(--coral-soft);
+    color: var(--coral-dark);
+    font-weight: 600;
+  }
+  .snav.is-active .snav__icon {
+    color: var(--coral);
+  }
+  .snav__badge {
+    margin-left: auto;
+    background: var(--red);
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 700;
+    min-width: 19px;
+    height: 19px;
+    border-radius: 999px;
+    display: grid;
+    place-items: center;
+    padding: 0 5px;
+  }
+
+  .sidebar__role-label {
+    display: block;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    margin: 0 6px 8px;
+  }
+  .role-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--cream);
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    padding: 12px;
+  }
+  .role-card__dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .role-card strong {
+    display: block;
+    font-size: 0.92rem;
+  }
+  .role-card small {
+    color: var(--muted);
+    font-size: 0.76rem;
+  }
+  .role-card__switch {
+    margin-left: auto;
+    color: var(--muted);
+    display: grid;
+    place-items: center;
+    padding: 4px;
+    border-radius: 8px;
+  }
+  .role-card__switch:hover {
+    background: var(--cream-deep);
+    color: var(--ink);
+  }
+
+  /* ----- Topbar ----- */
+  .main {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    height: 68px;
+    padding: 0 30px;
+    background: rgba(253, 247, 242, 0.85);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border);
+  }
+  .crumbs {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    font-size: 0.92rem;
+    color: var(--muted);
+    min-width: 0;
+  }
+  .crumbs a:hover {
+    color: var(--coral-dark);
+  }
+  .crumbs span:last-child {
+    color: var(--ink);
+    font-weight: 600;
+  }
+  .crumbs__sep {
+    color: var(--border-strong);
+  }
+  .topbar__actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .topsearch {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 8px 14px;
+    color: var(--muted);
+    width: 320px;
+    max-width: 36vw;
+  }
+  .topsearch:focus-within {
+    border-color: var(--coral);
+  }
+  .topsearch input {
+    border: none;
+    outline: none;
+    background: none;
+    font-family: inherit;
+    font-size: 0.9rem;
+    color: var(--ink);
+    flex: 1;
+    min-width: 0;
+  }
+  .topsearch kbd {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    background: var(--cream-deep);
+    border-radius: 6px;
+    padding: 2px 6px;
+    color: var(--muted);
+  }
+  .iconbtn {
+    position: relative;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    display: grid;
+    place-items: center;
+    color: var(--ink-soft);
+  }
+  .iconbtn:hover {
+    border-color: var(--coral);
+    color: var(--coral-dark);
+  }
+  .iconbtn__dot {
+    position: absolute;
+    top: 9px;
+    right: 10px;
+    width: 7px;
+    height: 7px;
+    background: var(--red);
+    border-radius: 50%;
+    border: 1.5px solid var(--surface);
+  }
+
+  .content {
+    padding: 30px;
+    flex: 1;
+  }
+
+  /* ----- Responsive ----- */
+  @media (max-width: 860px) {
+    .shell {
+      grid-template-columns: 1fr;
+    }
+    .sidebar {
+      position: static;
+      height: auto;
+      flex-direction: row;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px 16px;
+      padding: 14px 18px;
+    }
+    .sidebar__top {
+      padding: 0;
+    }
+    .sidebar__nav {
+      flex-direction: row;
+      flex-wrap: wrap;
+      flex: 1 1 100%;
+      order: 3;
+      gap: 6px;
+    }
+    .snav {
+      padding: 8px 12px;
+    }
+    .sidebar__role {
+      order: 2;
+      margin-left: auto;
+    }
+    .sidebar__role-label {
+      display: none;
+    }
+    .topsearch {
+      display: none;
+    }
+    .content {
+      padding: 20px 18px;
+    }
+  }
+</style>
+
+<script>
+  // Conmutador de rol (solo demostración de navegación):
+  // recorre los tres roles y refleja el cambio visualmente.
+  const roles = ["Hospital", "Laboratorio", "Universidad"];
+  const colors: Record<string, string> = {
+    Hospital: getComputedStyle(document.documentElement).getPropertyValue("--coral"),
+    Laboratorio: getComputedStyle(document.documentElement).getPropertyValue("--teal"),
+    Universidad: getComputedStyle(document.documentElement).getPropertyValue("--amber-deep"),
+  };
+  const descs: Record<string, string> = {
+    Hospital: "Centro clínico verificado",
+    Laboratorio: "Proveedor de diagnóstico",
+    Universidad: "Investigación traslacional",
+  };
+  document.querySelector(".role-card__switch")?.addEventListener("click", () => {
+    const card = document.querySelector(".role-card") as HTMLElement;
+    const name = card.querySelector("strong")!;
+    const desc = card.querySelector("small")!;
+    const dot = card.querySelector(".role-card__dot") as HTMLElement;
+    const next = roles[(roles.indexOf(name.textContent!.trim()) + 1) % roles.length];
+    name.textContent = next;
+    desc.textContent = descs[next];
+    dot.style.background = colors[next];
+  });
+</script>

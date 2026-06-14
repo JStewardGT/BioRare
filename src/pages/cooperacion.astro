@@ -1,0 +1,659 @@
+---
+import AppShell from "../components/AppShell.astro";
+
+const base = import.meta.env.BASE_URL.replace(/\/?$/, "/");
+
+const requests = [
+  { inst: "Universidad de Navarra", role: "Universidad", disease: "Fibrosis quística", samples: 8, status: "pendiente", time: "hace 41 min" },
+  { inst: "Hospital La Paz", role: "Hospital", disease: "Síndrome de Rett", samples: 15, status: "aceptada", time: "hace 2 h" },
+  { inst: "Lab. Genómica BCN", role: "Laboratorio", disease: "Atrofia muscular esp.", samples: 6, status: "en revisión", time: "hace 5 h" },
+  { inst: "Biobanco IDIBELL", role: "Laboratorio", disease: "Enf. de Huntington", samples: 22, status: "rechazada", time: "ayer" },
+];
+const reqMeta: Record<string, string> = {
+  pendiente: "chip-amber",
+  aceptada: "chip-green",
+  "en revisión": "chip-teal",
+  rechazada: "chip-gray",
+};
+
+const threads = [
+  { inst: "Hospital La Paz", initials: "LP", color: "var(--coral)", last: "Perfecto, preparamos el envío de las 15 muestras esta semana.", time: "10:24", unread: 0, active: true },
+  { inst: "Universidad de Navarra", initials: "UN", color: "var(--amber-deep)", last: "¿Podrían confirmar el tipo de consentimiento informado?", time: "09:58", unread: 2, active: false },
+  { inst: "Lab. Genómica BCN", initials: "GB", color: "var(--teal)", last: "Adjuntamos la ficha técnica del lote solicitado.", time: "Ayer", unread: 0, active: false },
+  { inst: "Biobanco IDIBELL", initials: "ID", color: "var(--green)", last: "Gracias por la cooperación en el estudio anterior.", time: "Lun", unread: 0, active: false },
+];
+
+const messages = [
+  { from: "them", text: "Hola, hemos revisado vuestra solicitud sobre las 15 muestras de Síndrome de Rett (ORPHA:778).", time: "10:02" },
+  { from: "me", text: "Gracias. ¿Incluyen ADN y fibroblastos, o solo ADN?", time: "10:09" },
+  { from: "them", text: "Ambos. 9 muestras de ADN y 6 líneas de fibroblastos, todas con consentimiento para investigación.", time: "10:15" },
+  { from: "me", text: "Excelente. Procedemos con la solicitud formal de intercambio entonces.", time: "10:20" },
+  { from: "them", text: "Perfecto, preparamos el envío de las 15 muestras esta semana.", time: "10:24" },
+];
+---
+
+<AppShell active="cooperacion" role="Hospital" crumbs={[{ label: "Inicio", href: base }, { label: "Cooperación" }]} title="Cooperación · BioRare">
+  <div class="page-head">
+    <div>
+      <h1>Portal de cooperación</h1>
+      <p>Mensajería y solicitudes de intercambio entre instituciones de la red.</p>
+    </div>
+    <button class="btn btn-primary btn-sm" id="new-req-btn">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+      Nueva solicitud
+    </button>
+  </div>
+
+  <!-- ===== Solicitudes de intercambio ===== -->
+  <article class="card block">
+    <div class="block__head">
+      <h2>Solicitudes de intercambio</h2>
+      <span class="panel__sub" id="req-count">4 activas</span>
+    </div>
+
+    <!-- Formulario de nueva solicitud (oculto por defecto) -->
+    <form class="new-req" id="new-req-form" hidden>
+      <div class="new-req__grid">
+        <label>
+          <span>Institución</span>
+          <input type="text" name="inst" placeholder="Tu institución" required />
+        </label>
+        <label>
+          <span>Enfermedad</span>
+          <input type="text" name="disease" placeholder="Enfermedad de interés" required />
+        </label>
+        <label class="new-req__n">
+          <span>Nº muestras</span>
+          <input type="number" name="samples" min="1" value="5" required />
+        </label>
+      </div>
+      <div class="new-req__actions">
+        <button type="button" class="btn btn-ghost btn-sm" id="new-req-cancel">Cancelar</button>
+        <button type="submit" class="btn btn-primary btn-sm">Enviar solicitud</button>
+      </div>
+    </form>
+
+    <div class="req-list" id="req-list">
+      {
+        requests.map((r) => (
+          <div class="req">
+            <div class="req__inst">
+              <strong>{r.inst}</strong>
+              <span class="req__role">{r.role}</span>
+            </div>
+            <div class="req__disease">
+              <span class="req__k">Enfermedad</span>
+              {r.disease}
+            </div>
+            <div class="req__n">
+              <span class="req__k">Muestras</span>
+              <span class="mono">{r.samples}</span>
+            </div>
+            <span class={`chip ${reqMeta[r.status]}`}>{r.status}</span>
+            <span class="req__time">{r.time}</span>
+            <div class="req__actions">
+              {r.status === "pendiente" ? (
+                <>
+                  <button class="btn btn-primary btn-sm" data-action="accept">Aceptar</button>
+                  <button class="btn btn-ghost btn-sm" data-action="reject">Rechazar</button>
+                </>
+              ) : (
+                <button class="btn btn-ghost btn-sm">Ver detalle</button>
+              )}
+            </div>
+          </div>
+        ))
+      }
+    </div>
+  </article>
+
+  <!-- ===== Mensajería ===== -->
+  <article class="card messenger">
+    <!-- Lista de conversaciones -->
+    <aside class="threads">
+      <div class="threads__head">
+        <h2>Mensajes</h2>
+        <span class="chip chip-red">2 nuevos</span>
+      </div>
+      <ul>
+        {
+          threads.map((t) => (
+            <li class={`thread ${t.active ? "is-active" : ""}`}>
+              <span class="thread__avatar" style={`background:${t.color}`}>{t.initials}</span>
+              <div class="thread__body">
+                <div class="thread__top">
+                  <strong>{t.inst}</strong>
+                  <span class="thread__time">{t.time}</span>
+                </div>
+                <p>{t.last}</p>
+              </div>
+              {t.unread > 0 && <span class="thread__unread">{t.unread}</span>}
+            </li>
+          ))
+        }
+      </ul>
+    </aside>
+
+    <!-- Conversación activa -->
+    <section class="chat">
+      <header class="chat__head">
+        <span class="thread__avatar" id="chat-avatar" style="background:var(--coral)">LP</span>
+        <div>
+          <strong id="chat-name">Hospital La Paz</strong>
+          <small><span class="dot" style="background:var(--green)"></span> En línea · Madrid</small>
+        </div>
+        <button class="iconbtn-sm" aria-label="Información de la conversación">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/></svg>
+        </button>
+      </header>
+
+      <div class="chat__body" id="chat-body">
+        <div class="chat__day">Hoy</div>
+        {
+          messages.map((m) => (
+            <div class={`msg msg--${m.from}`}>
+              <p>{m.text}</p>
+              <span class="msg__time">{m.time}</span>
+            </div>
+          ))
+        }
+      </div>
+
+      <form class="chat__input" id="chat-form">
+        <button type="button" class="iconbtn-sm" aria-label="Adjuntar">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.4 11.05 12.25 20.2a5 5 0 0 1-7.07-7.07l9.19-9.19a3 3 0 0 1 4.24 4.24l-9.2 9.19a1 1 0 0 1-1.41-1.41l8.49-8.49"/></svg>
+        </button>
+        <input type="text" id="chat-text" placeholder="Escribe un mensaje…" aria-label="Mensaje" autocomplete="off" />
+        <button type="submit" class="btn btn-primary btn-sm chat__send">
+          Enviar
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4 20-7z"/></svg>
+        </button>
+      </form>
+    </section>
+  </article>
+</AppShell>
+
+<style>
+  .page-head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+  .page-head h1 {
+    font-size: 1.6rem;
+  }
+  .page-head p {
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  .block {
+    padding: 22px 24px;
+    margin-bottom: 18px;
+  }
+  .block__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 18px;
+  }
+  .block__head h2 {
+    font-size: 1.1rem;
+  }
+  .panel__sub {
+    font-size: 0.8rem;
+    color: var(--muted);
+  }
+  .mono {
+    font-family: var(--font-mono);
+  }
+
+  /* Formulario nueva solicitud */
+  .new-req {
+    background: var(--cream);
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    padding: 16px 18px;
+    margin-bottom: 16px;
+  }
+  .new-req__grid {
+    display: grid;
+    grid-template-columns: 1.4fr 1.4fr 0.8fr;
+    gap: 14px;
+  }
+  .new-req label {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+  .new-req label span {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+    font-weight: 600;
+  }
+  .new-req input {
+    border: 1px solid var(--border);
+    border-radius: var(--r-sm);
+    padding: 9px 12px;
+    font-family: inherit;
+    font-size: 0.9rem;
+    background: var(--surface);
+    outline: none;
+  }
+  .new-req input:focus {
+    border-color: var(--coral);
+  }
+  .new-req__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 14px;
+  }
+  @media (max-width: 620px) {
+    .new-req__grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* Solicitudes */
+  .req-list {
+    display: flex;
+    flex-direction: column;
+  }
+  .req {
+    display: grid;
+    grid-template-columns: 1.4fr 1.6fr 0.9fr 1fr 0.9fr auto;
+    align-items: center;
+    gap: 16px;
+    padding: 15px 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  .req:last-child {
+    border-bottom: none;
+  }
+  .req__inst strong {
+    display: block;
+    font-size: 0.95rem;
+  }
+  .req__role {
+    font-size: 0.76rem;
+    color: var(--muted);
+  }
+  .req__k {
+    display: block;
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+    margin-bottom: 2px;
+  }
+  .req__disease,
+  .req__n {
+    font-size: 0.9rem;
+  }
+  .req__time {
+    font-size: 0.8rem;
+    color: var(--muted);
+  }
+  .req__actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+  }
+
+  /* Mensajería */
+  .messenger {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    overflow: hidden;
+    min-height: 540px;
+  }
+  .threads {
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+  }
+  .threads__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 20px 14px;
+  }
+  .threads__head h2 {
+    font-size: 1.05rem;
+  }
+  .threads ul {
+    list-style: none;
+    overflow-y: auto;
+  }
+  .thread {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    padding: 14px 18px;
+    cursor: pointer;
+    border-left: 3px solid transparent;
+    transition: background 0.12s ease;
+  }
+  .thread:hover {
+    background: var(--cream);
+  }
+  .thread.is-active {
+    background: var(--coral-soft);
+    border-left-color: var(--coral);
+  }
+  .thread__avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.82rem;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+  }
+  .thread__body {
+    min-width: 0;
+    flex: 1;
+  }
+  .thread__top {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .thread__top strong {
+    font-size: 0.9rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .thread__time {
+    font-size: 0.74rem;
+    color: var(--muted);
+    flex-shrink: 0;
+  }
+  .thread__body p {
+    font-size: 0.82rem;
+    color: var(--muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-top: 2px;
+  }
+  .thread__unread {
+    background: var(--coral);
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 700;
+    min-width: 20px;
+    height: 20px;
+    border-radius: 999px;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+  }
+
+  /* Chat */
+  .chat {
+    display: flex;
+    flex-direction: column;
+    background: var(--cream);
+  }
+  .chat__head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 22px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+  }
+  .chat__head strong {
+    display: block;
+    font-size: 0.95rem;
+  }
+  .chat__head small {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.78rem;
+    color: var(--muted);
+  }
+  .iconbtn-sm {
+    margin-left: auto;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: grid;
+    place-items: center;
+    color: var(--muted);
+  }
+  .iconbtn-sm:hover {
+    background: var(--cream);
+    color: var(--ink);
+  }
+  .chat__body {
+    flex: 1;
+    padding: 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    overflow-y: auto;
+  }
+  .chat__day {
+    align-self: center;
+    font-size: 0.74rem;
+    color: var(--muted);
+    background: var(--cream-deep);
+    padding: 4px 12px;
+    border-radius: 999px;
+  }
+  .msg {
+    max-width: 72%;
+    padding: 11px 15px;
+    border-radius: 16px;
+    font-size: 0.9rem;
+    line-height: 1.45;
+    position: relative;
+  }
+  .msg__time {
+    display: block;
+    font-size: 0.68rem;
+    margin-top: 5px;
+    opacity: 0.7;
+  }
+  .msg--them {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-bottom-left-radius: 5px;
+    align-self: flex-start;
+  }
+  .msg--me {
+    background: var(--coral);
+    color: #fff;
+    border-bottom-right-radius: 5px;
+    align-self: flex-end;
+  }
+  .chat__input {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 18px;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+  }
+  .chat__input input {
+    flex: 1;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 11px 16px;
+    font-family: inherit;
+    font-size: 0.9rem;
+    outline: none;
+  }
+  .chat__input input:focus {
+    border-color: var(--coral);
+  }
+  .chat__send {
+    flex-shrink: 0;
+  }
+
+  @media (max-width: 920px) {
+    .req {
+      grid-template-columns: 1fr 1fr;
+      gap: 10px 16px;
+    }
+    .req__actions {
+      grid-column: 1 / -1;
+      justify-content: flex-start;
+    }
+    .messenger {
+      grid-template-columns: 1fr;
+    }
+    .threads {
+      border-right: none;
+      border-bottom: 1px solid var(--border);
+      max-height: 280px;
+    }
+  }
+</style>
+
+<script>
+  const STORE_KEY = "biorare:requests";
+
+  // ---------- Mensajería: enviar mensaje ----------
+  const chatForm = document.querySelector<HTMLFormElement>("#chat-form");
+  const chatText = document.querySelector<HTMLInputElement>("#chat-text");
+  const chatBody = document.querySelector<HTMLElement>("#chat-body");
+
+  function nowHHMM(): string {
+    const d = new Date();
+    return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+  }
+
+  chatForm?.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const text = chatText?.value.trim();
+    if (!text || !chatBody) return;
+    const bubble = document.createElement("div");
+    bubble.className = "msg msg--me";
+    bubble.innerHTML = `<p></p><span class="msg__time">${nowHHMM()}</span>`;
+    bubble.querySelector("p")!.textContent = text;
+    chatBody.appendChild(bubble);
+    chatBody.scrollTop = chatBody.scrollHeight;
+    if (chatText) chatText.value = "";
+  });
+
+  // ---------- Mensajería: cambiar de conversación ----------
+  const chatAvatar = document.querySelector<HTMLElement>("#chat-avatar");
+  const chatName = document.querySelector<HTMLElement>("#chat-name");
+
+  document.querySelectorAll<HTMLLIElement>(".thread").forEach((thread) => {
+    thread.addEventListener("click", () => {
+      document.querySelectorAll(".thread").forEach((t) => t.classList.remove("is-active"));
+      thread.classList.add("is-active");
+      thread.querySelector(".thread__unread")?.remove();
+
+      const avatar = thread.querySelector<HTMLElement>(".thread__avatar");
+      const name = thread.querySelector<HTMLElement>(".thread__top strong");
+      if (chatAvatar && avatar) {
+        chatAvatar.textContent = avatar.textContent;
+        chatAvatar.style.background = avatar.style.background;
+      }
+      if (chatName && name) chatName.textContent = name.textContent;
+    });
+  });
+
+  // ---------- Solicitudes: aceptar / rechazar ----------
+  function wireRequestActions(scope: ParentNode) {
+    scope.querySelectorAll<HTMLButtonElement>("[data-action]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const req = btn.closest<HTMLElement>(".req");
+        const chip = req?.querySelector<HTMLElement>(".chip");
+        const actions = req?.querySelector<HTMLElement>(".req__actions");
+        const accepted = btn.dataset.action === "accept";
+        if (chip) {
+          chip.textContent = accepted ? "aceptada" : "rechazada";
+          chip.className = `chip ${accepted ? "chip-green" : "chip-gray"}`;
+        }
+        if (actions) actions.innerHTML = `<button class="btn btn-ghost btn-sm">Ver detalle</button>`;
+        updateCount();
+      });
+    });
+  }
+  wireRequestActions(document);
+
+  // ---------- Solicitudes: nueva (con persistencia en localStorage) ----------
+  const reqList = document.querySelector<HTMLElement>("#req-list");
+  const reqCount = document.querySelector<HTMLElement>("#req-count");
+  const newBtn = document.querySelector<HTMLButtonElement>("#new-req-btn");
+  const form = document.querySelector<HTMLFormElement>("#new-req-form");
+  const cancel = document.querySelector<HTMLButtonElement>("#new-req-cancel");
+
+  function updateCount() {
+    const pend = reqList?.querySelectorAll(".chip-amber").length ?? 0;
+    const total = reqList?.querySelectorAll(".req").length ?? 0;
+    if (reqCount) reqCount.textContent = `${total} activas${pend ? ` · ${pend} pendiente${pend === 1 ? "" : "s"}` : ""}`;
+  }
+
+  function makeRequest(r: { inst: string; disease: string; samples: number }): HTMLElement {
+    const el = document.createElement("div");
+    el.className = "req";
+    el.innerHTML = `
+      <div class="req__inst"><strong></strong><span class="req__role">Tu institución</span></div>
+      <div class="req__disease"><span class="req__k">Enfermedad</span><span class="req__disease-v"></span></div>
+      <div class="req__n"><span class="req__k">Muestras</span><span class="mono">${r.samples}</span></div>
+      <span class="chip chip-amber">pendiente</span>
+      <span class="req__time">recién</span>
+      <div class="req__actions">
+        <button class="btn btn-primary btn-sm" data-action="accept">Aceptar</button>
+        <button class="btn btn-ghost btn-sm" data-action="reject">Rechazar</button>
+      </div>`;
+    el.querySelector(".req__inst strong")!.textContent = r.inst;
+    el.querySelector(".req__disease-v")!.textContent = r.disease;
+    wireRequestActions(el);
+    return el;
+  }
+
+  function loadStored() {
+    try {
+      const stored = JSON.parse(localStorage.getItem(STORE_KEY) ?? "[]");
+      stored.forEach((r: any) => reqList?.prepend(makeRequest(r)));
+    } catch {}
+    updateCount();
+  }
+
+  newBtn?.addEventListener("click", () => {
+    if (form) form.hidden = !form.hidden;
+    if (!form?.hidden) form?.querySelector<HTMLInputElement>('input[name="inst"]')?.focus();
+  });
+  cancel?.addEventListener("click", () => {
+    if (form) form.hidden = true;
+  });
+  form?.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const data = new FormData(form);
+    const r = {
+      inst: String(data.get("inst") ?? "").trim(),
+      disease: String(data.get("disease") ?? "").trim(),
+      samples: Number(data.get("samples")) || 1,
+    };
+    if (!r.inst || !r.disease) return;
+    reqList?.prepend(makeRequest(r));
+    try {
+      const stored = JSON.parse(localStorage.getItem(STORE_KEY) ?? "[]");
+      stored.push(r);
+      localStorage.setItem(STORE_KEY, JSON.stringify(stored));
+    } catch {}
+    form.reset();
+    form.hidden = true;
+    updateCount();
+  });
+
+  loadStored();
+</script>

@@ -1,0 +1,614 @@
+---
+import Layout from "../layouts/Layout.astro";
+import SiteNav from "../components/SiteNav.astro";
+import Footer from "../components/Footer.astro";
+
+const base = import.meta.env.BASE_URL.replace(/\/?$/, "/");
+
+const problems = [
+  {
+    tag: "Hoy",
+    title: "Datos fragmentados",
+    body: "Cada hospital y biobanco guarda la información en su propio formato. La misma enfermedad se describe de mil maneras distintas e incompatibles.",
+    icon: "fragment",
+  },
+  {
+    tag: "Hoy",
+    title: "Falta de estandarización",
+    body: "Sin códigos comunes (ORPHA, ICD-10) ni nomenclatura genética unificada, cruzar muestras entre instituciones es prácticamente imposible.",
+    icon: "standard",
+  },
+  {
+    tag: "Hoy",
+    title: "Investigación lenta",
+    body: "Encontrar una cohorte suficiente para una enfermedad rara puede tomar años. El tiempo perdido es tiempo que los pacientes no tienen.",
+    icon: "slow",
+  },
+];
+
+const stats = [
+  { value: "+180", label: "Biobancos integrables" },
+  { value: "7.000+", label: "Enfermedades catalogadas" },
+  { value: "−64%", label: "Reducción de tiempos" },
+  { value: "24/7", label: "Cooperación global" },
+];
+
+const steps = [
+  { n: "01", title: "Registro institucional", desc: "Hospital, laboratorio o universidad verifica su identidad y rol." },
+  { n: "02", title: "Carga estandarizada", desc: "Las muestras se suben con códigos ORPHA / ICD-10 unificados." },
+  { n: "03", title: "Búsqueda y cooperación", desc: "Investigadores localizan cohortes y solicitan intercambios." },
+  { n: "04", title: "Análisis traslacional", desc: "Los datos cruzados aceleran del laboratorio a la clínica." },
+];
+---
+
+<Layout>
+  <SiteNav />
+
+  <main>
+    <!-- ============ HERO ============ -->
+    <section class="hero" id="plataforma">
+      <div class="hero__glow" aria-hidden="true"></div>
+      <div class="container hero__inner">
+        <span class="eyebrow">
+          <span class="dot" style="background: var(--coral)"></span>
+          Red colaborativa de enfermedades raras
+        </span>
+        <h1 class="hero__title">
+          Estandarización <span class="hl">global</span> de datos en
+          enfermedades raras
+        </h1>
+        <p class="hero__lead">
+          BioRare unifica la información clínica, genética y de biobancos de
+          instituciones de todo el mundo bajo un mismo estándar. Menos
+          fragmentación, más cooperación, investigación más rápida.
+        </p>
+        <div class="hero__actions">
+          <a href="#cooperacion" class="btn btn-primary">
+            Solicitar acceso institucional
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </a>
+          <a href={base + "buscador"} class="btn btn-ghost">Ver la documentación</a>
+        </div>
+
+        <div class="hero__preview" aria-hidden="true">
+          <div class="preview-card">
+            <div class="preview-card__bar">
+              <span class="dot" style="background:#f4655a"></span>
+              <span class="dot" style="background:#f5b94b"></span>
+              <span class="dot" style="background:#54c08a"></span>
+              <span class="preview-card__url">biorare.org / buscador / orpha-773</span>
+            </div>
+            <div class="preview-card__body">
+              <div class="pv-row pv-head">
+                <div>
+                  <strong>Síndrome de Rett</strong>
+                  <small>ORPHA:778 · ICD-10 F84.2</small>
+                </div>
+                <span class="chip chip-teal">Cromosoma X</span>
+              </div>
+              <div class="pv-grid">
+                <div class="pv-tile pv-tile--clinic">
+                  <span class="chip chip-red">Severidad alta</span>
+                  <p>Regresión neurológica · pérdida de habilidades manuales</p>
+                </div>
+                <div class="pv-tile pv-tile--gene">
+                  <code>MECP2 · Xq28</code>
+                  <code>c.473C&gt;T · p.Thr158Met</code>
+                  <code>freq. 0.0041</code>
+                </div>
+              </div>
+              <div class="pv-foot">
+                <span><b>342</b> muestras en red</span>
+                <span><b>12</b> biobancos</span>
+                <span class="pv-foot__live"><span class="dot" style="background:var(--green)"></span> disponible</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ PROBLEMA ============ -->
+    <section class="problem" id="biobancos">
+      <div class="container">
+        <div class="section-head">
+          <span class="eyebrow">El problema</span>
+          <h2>Los datos existen. El estándar, no.</h2>
+          <p>
+            La información sobre enfermedades raras está repartida en silos que
+            no se hablan entre sí. BioRare nace para resolver tres barreras
+            estructurales.
+          </p>
+        </div>
+        <div class="problem__grid">
+          {
+            problems.map((p) => (
+              <article class={`pcard pcard--${p.icon}`}>
+                <div class="pcard__icon" aria-hidden="true">
+                  {p.icon === "fragment" && (
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h7v7H3zM14 14h7v7h-7z"/><path d="M14 3h7v4M3 14v4M14 7l-7 7"/></svg>
+                  )}
+                  {p.icon === "standard" && (
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h10M4 18h7"/><circle cx="18" cy="15" r="3"/><path d="m21 18-1.5-1.5"/></svg>
+                  )}
+                  {p.icon === "slow" && (
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2M9 2h6"/></svg>
+                  )}
+                </div>
+                <span class="pcard__tag">{p.tag}</span>
+                <h3>{p.title}</h3>
+                <p>{p.body}</p>
+              </article>
+            ))
+          }
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ NÚMEROS DE IMPACTO ============ -->
+    <section class="impact">
+      <div class="container">
+        <div class="impact__inner">
+          {
+            stats.map((s) => (
+              <div class="impact__item">
+                <span class="impact__value">{s.value}</span>
+                <span class="impact__label">{s.label}</span>
+              </div>
+            ))
+          }
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ PASOS / FLUJO ============ -->
+    <section class="flow" id="cooperacion">
+      <div class="container">
+        <div class="section-head">
+          <span class="eyebrow">Cómo funciona</span>
+          <h2>Del registro al análisis traslacional</h2>
+          <p>Un flujo de cuatro etapas que cualquier institución puede recorrer.</p>
+        </div>
+        <ol class="flow__bar">
+          {
+            steps.map((s, i) => (
+              <li class="flow__step">
+                <div class="flow__num">{s.n}</div>
+                <div class="flow__content">
+                  <h4>{s.title}</h4>
+                  <p>{s.desc}</p>
+                </div>
+                {i < steps.length - 1 && (
+                  <span class="flow__arrow" aria-hidden="true">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                  </span>
+                )}
+              </li>
+            ))
+          }
+        </ol>
+
+        <div class="flow__cta">
+          <div>
+            <h3>¿Tu institución quiere formar parte?</h3>
+            <p>Solicita acceso y empieza a estandarizar tus muestras hoy.</p>
+          </div>
+          <div class="flow__cta-actions">
+            <a href={base + "cooperacion"} class="btn btn-primary">Solicitar acceso institucional</a>
+            <a href={base + "dashboard"} class="btn btn-ghost">Explorar demo</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <Footer />
+</Layout>
+
+<style>
+  /* ----- Encabezado de sección ----- */
+  .section-head {
+    max-width: 620px;
+    margin-bottom: 44px;
+  }
+  .section-head h2 {
+    font-size: clamp(1.7rem, 3.4vw, 2.4rem);
+    margin: 12px 0 14px;
+  }
+  .section-head p {
+    color: var(--muted);
+    font-size: 1.05rem;
+  }
+
+  /* ----- HERO ----- */
+  .hero {
+    position: relative;
+    overflow: hidden;
+    padding: 72px 0 90px;
+  }
+  .hero__glow {
+    position: absolute;
+    top: -180px;
+    right: -120px;
+    width: 620px;
+    height: 620px;
+    background: radial-gradient(
+      circle,
+      rgba(232, 152, 58, 0.22),
+      rgba(232, 93, 78, 0.12) 45%,
+      transparent 70%
+    );
+    filter: blur(8px);
+    z-index: 0;
+  }
+  .hero__inner {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .hero__title {
+    font-size: clamp(2.3rem, 5.6vw, 4rem);
+    max-width: 14ch;
+    margin: 20px 0 0;
+  }
+  .hl {
+    position: relative;
+    color: var(--coral);
+    white-space: nowrap;
+  }
+  .hl::after {
+    content: "";
+    position: absolute;
+    left: -2%;
+    right: -2%;
+    bottom: 0.08em;
+    height: 0.32em;
+    background: var(--amber-soft);
+    z-index: -1;
+    border-radius: 4px;
+  }
+  .hero__lead {
+    max-width: 600px;
+    margin: 22px auto 0;
+    font-size: 1.13rem;
+    color: var(--ink-soft);
+  }
+  .hero__actions {
+    display: flex;
+    gap: 14px;
+    margin-top: 30px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  /* Preview flotante */
+  .hero__preview {
+    margin-top: 56px;
+    width: 100%;
+    max-width: 680px;
+    perspective: 1400px;
+  }
+  .preview-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    box-shadow: var(--shadow-lg);
+    overflow: hidden;
+    text-align: left;
+    transform: rotateX(6deg);
+    transform-origin: top center;
+  }
+  .preview-card__bar {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 13px 18px;
+    background: var(--cream-deep);
+    border-bottom: 1px solid var(--border);
+  }
+  .preview-card__url {
+    margin-left: 12px;
+    font-family: var(--font-mono);
+    font-size: 0.76rem;
+    color: var(--muted);
+  }
+  .preview-card__body {
+    padding: 20px 22px 22px;
+  }
+  .pv-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .pv-head strong {
+    display: block;
+    font-size: 1.18rem;
+  }
+  .pv-head small {
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    color: var(--muted);
+  }
+  .pv-grid {
+    display: grid;
+    grid-template-columns: 1.3fr 1fr;
+    gap: 12px;
+    margin: 18px 0;
+  }
+  .pv-tile {
+    border-radius: var(--r-md);
+    padding: 14px;
+  }
+  .pv-tile--clinic {
+    background: var(--coral-soft);
+  }
+  .pv-tile--clinic p {
+    margin-top: 9px;
+    font-size: 0.88rem;
+    color: var(--ink-soft);
+  }
+  .pv-tile--gene {
+    background: var(--ink);
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    justify-content: center;
+  }
+  .pv-tile--gene code {
+    font-family: var(--font-mono);
+    font-size: 0.76rem;
+    color: #ffd9a0;
+  }
+  .pv-foot {
+    display: flex;
+    gap: 22px;
+    align-items: center;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+    font-size: 0.86rem;
+    color: var(--muted);
+  }
+  .pv-foot b {
+    color: var(--ink);
+  }
+  .pv-foot__live {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--green);
+    font-weight: 600;
+  }
+
+  /* ----- PROBLEMA ----- */
+  .problem {
+    padding: 80px 0;
+  }
+  .problem__grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 22px;
+  }
+  .pcard {
+    position: relative;
+    border-radius: var(--r-lg);
+    padding: 28px 26px 30px;
+    background: linear-gradient(160deg, #fff, var(--coral-soft));
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-sm);
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+  }
+  .pcard--standard {
+    background: linear-gradient(160deg, #fff, var(--amber-soft));
+  }
+  .pcard--slow {
+    background: linear-gradient(160deg, #fff, #fbe0d2);
+  }
+  .pcard:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-md);
+  }
+  .pcard__icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 14px;
+    background: var(--surface);
+    display: grid;
+    place-items: center;
+    color: var(--coral-dark);
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 18px;
+  }
+  .pcard__icon svg {
+    width: 26px;
+    height: 26px;
+  }
+  .pcard__tag {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--coral-dark);
+  }
+  .pcard h3 {
+    font-size: 1.3rem;
+    margin: 6px 0 10px;
+  }
+  .pcard p {
+    color: var(--ink-soft);
+    font-size: 0.96rem;
+  }
+
+  /* ----- IMPACTO ----- */
+  .impact {
+    padding: 20px 0 40px;
+  }
+  .impact__inner {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    background: var(--ink);
+    border-radius: var(--r-xl);
+    padding: 44px 20px;
+    box-shadow: var(--shadow-lg);
+  }
+  .impact__item {
+    text-align: center;
+    padding: 8px 12px;
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  .impact__item:last-child {
+    border-right: none;
+  }
+  .impact__value {
+    display: block;
+    font-size: clamp(2rem, 4vw, 2.9rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    background: linear-gradient(120deg, #ff9d6b, var(--amber-soft));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .impact__label {
+    color: #c3b8af;
+    font-size: 0.9rem;
+    margin-top: 6px;
+    display: block;
+  }
+
+  /* ----- FLUJO ----- */
+  .flow {
+    padding: 80px 0 40px;
+  }
+  .flow__bar {
+    list-style: none;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    counter-reset: step;
+  }
+  .flow__step {
+    position: relative;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    padding: 24px 22px;
+    box-shadow: var(--shadow-sm);
+  }
+  .flow__num {
+    font-family: var(--font-mono);
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: #fff;
+    background: var(--coral);
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    display: grid;
+    place-items: center;
+    margin-bottom: 16px;
+  }
+  .flow__step:nth-child(2) .flow__num { background: var(--amber); }
+  .flow__step:nth-child(3) .flow__num { background: var(--teal); }
+  .flow__step:nth-child(4) .flow__num { background: var(--coral-dark); }
+  .flow__content h4 {
+    font-size: 1.05rem;
+    margin-bottom: 8px;
+  }
+  .flow__content p {
+    font-size: 0.9rem;
+    color: var(--muted);
+  }
+  .flow__arrow {
+    position: absolute;
+    right: -16px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 2;
+    color: var(--border-strong);
+    background: var(--cream);
+    border-radius: 50%;
+  }
+
+  .flow__cta {
+    margin-top: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    flex-wrap: wrap;
+    background: linear-gradient(120deg, var(--coral), var(--amber));
+    border-radius: var(--r-xl);
+    padding: 34px 40px;
+    color: #fff;
+  }
+  .flow__cta h3 {
+    font-size: 1.5rem;
+  }
+  .flow__cta p {
+    opacity: 0.92;
+    margin-top: 4px;
+  }
+  .flow__cta-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .flow__cta .btn-primary {
+    background: #fff;
+    color: var(--coral-dark);
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.15);
+  }
+  .flow__cta .btn-primary:hover {
+    background: var(--cream);
+  }
+  .flow__cta .btn-ghost {
+    background: transparent;
+    color: #fff;
+    border-color: rgba(255, 255, 255, 0.6);
+  }
+  .flow__cta .btn-ghost:hover {
+    border-color: #fff;
+    color: #fff;
+  }
+
+  /* ----- Responsive ----- */
+  @media (max-width: 900px) {
+    .problem__grid {
+      grid-template-columns: 1fr;
+    }
+    .impact__inner {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 24px 0;
+    }
+    .impact__item:nth-child(2) {
+      border-right: none;
+    }
+    .flow__bar {
+      grid-template-columns: 1fr;
+      gap: 14px;
+    }
+    .flow__arrow {
+      display: none;
+    }
+  }
+  @media (max-width: 560px) {
+    .pv-grid {
+      grid-template-columns: 1fr;
+    }
+    .impact__inner {
+      grid-template-columns: 1fr;
+    }
+    .impact__item {
+      border-right: none;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      padding-bottom: 18px;
+    }
+    .impact__item:last-child {
+      border-bottom: none;
+    }
+  }
+</style>

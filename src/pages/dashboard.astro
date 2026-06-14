@@ -1,0 +1,367 @@
+---
+import AppShell from "../components/AppShell.astro";
+import { listDiseases, totalSamples, formatNum } from "../data/diseases";
+
+const base = import.meta.env.BASE_URL.replace(/\/?$/, "/");
+
+const all = listDiseases();
+
+// --- Métricas derivadas del dataset (coherentes con las fichas) ---
+const totalMuestras = all.reduce((acc, d) => acc + totalSamples(d), 0);
+const disponibles = all.reduce(
+  (acc, d) => acc + d.samples.filter((s) => s.avail === "disponible").reduce((x, s) => x + s.n, 0),
+  0,
+);
+const pctDisp = Math.round((disponibles / totalMuestras) * 100);
+
+const metrics = [
+  { label: "Muestras totales", value: formatNum(totalMuestras), delta: `${all.length} enfermedades en red`, trend: "up", tone: "ink" },
+  { label: "Muestras disponibles", value: formatNum(disponibles), delta: `${pctDisp}% del total`, trend: "flat", tone: "green" },
+  { label: "Solicitudes activas", value: "4", delta: "1 pendiente de revisión", trend: "up", tone: "amber" },
+  { label: "Alertas de trazabilidad", value: "3", delta: "Requieren atención", trend: "alert", tone: "red" },
+];
+
+// --- Distribución de muestras por enfermedad (derivada del dataset) ---
+const palette = ["var(--coral)", "var(--amber)", "var(--teal)", "var(--coral-dark)", "var(--amber-deep)", "var(--green)"];
+const dist = all
+  .map((d, i) => ({ name: d.nombre, code: `ORPHA:${d.orpha}`, value: totalSamples(d), slug: d.slug, color: palette[i % palette.length] }))
+  .sort((a, b) => b.value - a.value);
+const maxVal = Math.max(...dist.map((d) => d.value));
+
+const activity = [
+  { type: "registro", who: "Lab. Genómica BCN", text: "registró 24 muestras de Síndrome de Rett", time: "hace 12 min", color: "var(--teal)" },
+  { type: "solicitud", who: "Univ. de Navarra", text: "solicitó cooperación sobre 8 muestras de FQ", time: "hace 41 min", color: "var(--amber-deep)" },
+  { type: "mensaje", who: "Hospital La Paz", text: "respondió a tu solicitud de intercambio", time: "hace 2 h", color: "var(--coral)" },
+  { type: "alerta", who: "Sistema", text: "cadena de custodia incompleta en lote #A-2291", time: "hace 3 h", color: "var(--red)" },
+  { type: "registro", who: "Biobanco IDIBELL", text: "actualizó el estado de 12 muestras a disponible", time: "hace 5 h", color: "var(--green)" },
+];
+
+const actIcon: Record<string, string> = {
+  registro: `<path d="M12 5v14M5 12h14"/>`,
+  solicitud: `<path d="M4 12h16M14 6l6 6-6 6"/>`,
+  mensaje: `<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>`,
+  alerta: `<path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/>`,
+};
+---
+
+<AppShell active="dashboard" role="Hospital" crumbs={[{ label: "Inicio", href: base }, { label: "Dashboard" }]} title="Dashboard · BioRare">
+  <div class="page-head">
+    <div>
+      <h1>Buenos días, Hospital Universitario</h1>
+      <p>Resumen de tu actividad en la red BioRare.</p>
+    </div>
+    <a href={base + "buscador"} class="btn btn-primary btn-sm">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4-4"/></svg>
+      Abrir buscador
+    </a>
+  </div>
+
+  <!-- ===== Métricas ===== -->
+  <section class="metrics">
+    {
+      metrics.map((m) => (
+        <article class={`metric metric--${m.tone}`}>
+          <span class="metric__label">{m.label}</span>
+          <span class="metric__value">{m.value}</span>
+          <span class={`metric__delta metric__delta--${m.trend}`}>
+            {m.trend === "alert" && <span class="dot" style="background:var(--red)" />}
+            {m.delta}
+          </span>
+        </article>
+      ))
+    }
+  </section>
+
+  <!-- ===== Gráfico + actividad ===== -->
+  <section class="grid-2">
+    <article class="card panel">
+      <div class="panel__head">
+        <div>
+          <h2>Distribución de muestras por enfermedad</h2>
+          <span class="panel__sub">Top 6 · red completa</span>
+        </div>
+        <div class="seg">
+          <button class="seg__btn is-active">Mes</button>
+          <button class="seg__btn">Año</button>
+        </div>
+      </div>
+
+      <div class="bars">
+        {
+          dist.map((d) => (
+            <a class="bar-row" href={`${base}ficha/${d.slug}`}>
+              <div class="bar-row__label">
+                <strong>{d.name}</strong>
+                <code>{d.code}</code>
+              </div>
+              <div class="bar-track">
+                <div class="bar-fill" style={`width:${(d.value / maxVal) * 100}%; background:${d.color}`} />
+              </div>
+              <span class="bar-row__val">{d.value}</span>
+            </a>
+          ))
+        }
+      </div>
+    </article>
+
+    <article class="card panel">
+      <div class="panel__head">
+        <h2>Actividad reciente</h2>
+        <a href={base + "cooperacion"} class="panel__link">Ver todo</a>
+      </div>
+      <ul class="feed">
+        {
+          activity.map((a) => (
+            <li class="feed__item">
+              <span class="feed__icon" style={`background:${a.color}1f; color:${a.color}`} set:html={`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${actIcon[a.type]}</svg>`} />
+              <div class="feed__body">
+                <p><strong>{a.who}</strong> {a.text}</p>
+                <span class="feed__time">{a.time}</span>
+              </div>
+            </li>
+          ))
+        }
+      </ul>
+    </article>
+  </section>
+</AppShell>
+
+<style>
+  .page-head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+  .page-head h1 {
+    font-size: 1.6rem;
+  }
+  .page-head p {
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  /* Métricas */
+  .metrics {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 22px;
+  }
+  .metric {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    padding: 20px 22px;
+    box-shadow: var(--shadow-sm);
+    position: relative;
+    overflow: hidden;
+  }
+  .metric::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: var(--border-strong);
+  }
+  .metric--green::before { background: var(--green); }
+  .metric--amber::before { background: var(--amber); }
+  .metric--red::before { background: var(--red); }
+  .metric--red {
+    background: linear-gradient(180deg, var(--red-soft), #fff 60%);
+  }
+  .metric__label {
+    font-size: 0.86rem;
+    color: var(--muted);
+    font-weight: 500;
+  }
+  .metric__value {
+    display: block;
+    font-size: 2.1rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    margin: 8px 0 6px;
+  }
+  .metric--red .metric__value {
+    color: var(--red);
+  }
+  .metric__delta {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.82rem;
+    color: var(--muted);
+  }
+  .metric__delta--up {
+    color: var(--green);
+  }
+  .metric__delta--alert {
+    color: var(--red);
+    font-weight: 600;
+  }
+
+  /* Paneles */
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr;
+    gap: 18px;
+  }
+  .panel {
+    padding: 22px 24px;
+  }
+  .panel__head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 22px;
+    gap: 12px;
+  }
+  .panel__head h2 {
+    font-size: 1.08rem;
+  }
+  .panel__sub {
+    font-size: 0.8rem;
+    color: var(--muted);
+  }
+  .panel__link {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--coral-dark);
+  }
+  .panel__link:hover {
+    text-decoration: underline;
+  }
+
+  .seg {
+    display: inline-flex;
+    background: var(--cream);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 3px;
+  }
+  .seg__btn {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--muted);
+    padding: 5px 14px;
+    border-radius: 999px;
+  }
+  .seg__btn.is-active {
+    background: var(--surface);
+    color: var(--ink);
+    box-shadow: var(--shadow-sm);
+  }
+
+  /* Barras */
+  .bars {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .bar-row {
+    display: grid;
+    grid-template-columns: 170px 1fr 44px;
+    align-items: center;
+    gap: 14px;
+    color: inherit;
+    text-decoration: none;
+    border-radius: var(--r-sm);
+    padding: 4px 6px;
+    margin: -4px -6px;
+    transition: background 0.12s ease;
+  }
+  .bar-row:hover {
+    background: var(--cream);
+  }
+  .bar-row:hover .bar-row__label strong {
+    color: var(--coral-dark);
+  }
+  .bar-row__label strong {
+    display: block;
+    font-size: 0.88rem;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .bar-row__label code {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--muted);
+  }
+  .bar-track {
+    height: 12px;
+    background: var(--cream-deep);
+    border-radius: 999px;
+    overflow: hidden;
+  }
+  .bar-fill {
+    height: 100%;
+    border-radius: 999px;
+    min-width: 6px;
+    animation: grow 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  @keyframes grow {
+    from { transform: scaleX(0); transform-origin: left; }
+  }
+  .bar-row__val {
+    font-weight: 700;
+    font-size: 0.92rem;
+    text-align: right;
+  }
+
+  /* Feed */
+  .feed {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+  }
+  .feed__item {
+    display: flex;
+    gap: 13px;
+    padding: 13px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .feed__item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+  .feed__icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+  }
+  .feed__body p {
+    font-size: 0.9rem;
+    line-height: 1.45;
+  }
+  .feed__time {
+    font-size: 0.78rem;
+    color: var(--muted);
+  }
+
+  @media (max-width: 1000px) {
+    .metrics {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    .grid-2 {
+      grid-template-columns: 1fr;
+    }
+  }
+  @media (max-width: 540px) {
+    .metrics {
+      grid-template-columns: 1fr;
+    }
+    .bar-row {
+      grid-template-columns: 120px 1fr 36px;
+      gap: 10px;
+    }
+  }
+</style>

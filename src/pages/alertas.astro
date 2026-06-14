@@ -1,0 +1,221 @@
+---
+import AppShell from "../components/AppShell.astro";
+
+const base = import.meta.env.BASE_URL.replace(/\/?$/, "/");
+
+const alerts = [
+  {
+    sev: "alta",
+    title: "Cadena de custodia incompleta",
+    lote: "A-2291",
+    biobank: "Biobanco IDIBELL",
+    disease: "Síndrome de Rett",
+    desc: "Falta el registro de transferencia entre el laboratorio de origen y el biobanco receptor. La trazabilidad no puede cerrarse.",
+    time: "hace 3 h",
+  },
+  {
+    sev: "media",
+    title: "Temperatura fuera de rango",
+    lote: "C-1043",
+    biobank: "BioBank Navarra",
+    disease: "Atrofia muscular espinal",
+    desc: "Lectura de −68 °C registrada durante 22 min en el congelador 4. Revisar viabilidad de las líneas celulares afectadas.",
+    time: "hace 6 h",
+  },
+  {
+    sev: "media",
+    title: "Consentimiento pendiente de renovación",
+    lote: "M-0876",
+    biobank: "Biobanco La Paz",
+    disease: "Fibrosis quística",
+    desc: "El consentimiento informado asociado a 12 muestras caduca en 15 días. Renovar antes de habilitar nuevos intercambios.",
+    time: "ayer",
+  },
+];
+---
+
+<AppShell
+  active="alertas"
+  role="Hospital"
+  crumbs={[{ label: "Inicio", href: base }, { label: "Alertas" }]}
+  title="Alertas · BioRare"
+>
+  <div class="page-head">
+    <div>
+      <h1>Alertas de trazabilidad</h1>
+      <p>Incidencias abiertas en la cadena de custodia y conservación de muestras.</p>
+    </div>
+    <span class="count-pill" aria-live="polite"><b id="open-count">{alerts.length}</b> abiertas</span>
+  </div>
+
+  <ul class="alert-list" id="alert-list">
+    {
+      alerts.map((a) => (
+        <li class={`alert alert--${a.sev}`}>
+          <span class="alert__icon" aria-hidden="true">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
+          </span>
+          <div class="alert__body">
+            <div class="alert__top">
+              <strong>{a.title}</strong>
+              <span class={`chip ${a.sev === "alta" ? "chip-red" : "chip-amber"}`}>
+                {a.sev === "alta" ? "Prioridad alta" : "Prioridad media"}
+              </span>
+            </div>
+            <p class="alert__desc">{a.desc}</p>
+            <div class="alert__meta">
+              <span class="mono">Lote #{a.lote}</span>
+              <span>{a.biobank}</span>
+              <span>{a.disease}</span>
+              <span class="alert__time">{a.time}</span>
+            </div>
+          </div>
+          <button class="btn btn-ghost btn-sm alert__resolve">Marcar como resuelta</button>
+        </li>
+      ))
+    }
+  </ul>
+
+  <p class="alert-empty" id="alert-empty" hidden>
+    No hay alertas abiertas. Toda la cadena de custodia está al día.
+  </p>
+</AppShell>
+
+<style>
+  .page-head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 22px;
+    flex-wrap: wrap;
+  }
+  .page-head h1 {
+    font-size: 1.7rem;
+  }
+  .page-head p {
+    color: var(--muted);
+    margin-top: 4px;
+  }
+  .count-pill {
+    font-size: 0.85rem;
+    color: var(--muted);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 7px 14px;
+    white-space: nowrap;
+  }
+  .count-pill b {
+    color: var(--red);
+  }
+
+  .alert-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .alert {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--amber-state);
+    border-radius: var(--r-lg);
+    padding: 18px 20px;
+    box-shadow: var(--shadow-sm);
+  }
+  .alert--alta {
+    border-left-color: var(--red);
+    background: linear-gradient(100deg, var(--red-soft), var(--surface) 55%);
+  }
+  .alert__icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    display: grid;
+    place-items: center;
+    background: var(--amber-soft);
+    color: var(--amber-deep);
+    flex-shrink: 0;
+  }
+  .alert--alta .alert__icon {
+    background: var(--red-soft);
+    color: var(--red);
+  }
+  .alert__body {
+    flex: 1;
+    min-width: 0;
+  }
+  .alert__top {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 6px;
+  }
+  .alert__top strong {
+    font-size: 1.02rem;
+  }
+  .alert__desc {
+    font-size: 0.9rem;
+    color: var(--ink-soft);
+    margin-bottom: 10px;
+  }
+  .alert__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 16px;
+    font-size: 0.8rem;
+    color: var(--muted);
+  }
+  .alert__time {
+    margin-left: auto;
+  }
+  .mono {
+    font-family: var(--font-mono);
+  }
+  .alert__resolve {
+    flex-shrink: 0;
+    align-self: center;
+  }
+  .alert-empty {
+    padding: 48px;
+    text-align: center;
+    color: var(--muted);
+  }
+
+  @media (max-width: 720px) {
+    .alert {
+      flex-wrap: wrap;
+    }
+    .alert__resolve {
+      align-self: flex-start;
+    }
+    .alert__time {
+      margin-left: 0;
+    }
+  }
+</style>
+
+<script>
+  const list = document.querySelector<HTMLElement>("#alert-list");
+  const counter = document.querySelector<HTMLElement>("#open-count");
+  const empty = document.querySelector<HTMLElement>("#alert-empty");
+
+  function refresh() {
+    const open = list?.querySelectorAll(".alert").length ?? 0;
+    if (counter) counter.textContent = String(open);
+    if (empty) empty.hidden = open !== 0;
+  }
+
+  list?.querySelectorAll<HTMLButtonElement>(".alert__resolve").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const item = btn.closest(".alert");
+      item?.remove();
+      refresh();
+    });
+  });
+</script>
