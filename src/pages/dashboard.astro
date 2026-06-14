@@ -22,11 +22,16 @@ const metrics = [
 ];
 
 // --- Distribución de muestras por enfermedad (derivada del dataset) ---
+// "Año" = acumulado en red; "Mes" = registros del mes (derivado, demostración).
 const palette = ["var(--coral)", "var(--amber)", "var(--teal)", "var(--coral-dark)", "var(--amber-deep)", "var(--green)"];
 const dist = all
-  .map((d, i) => ({ name: d.nombre, code: `ORPHA:${d.orpha}`, value: totalSamples(d), slug: d.slug, color: palette[i % palette.length] }))
-  .sort((a, b) => b.value - a.value);
-const maxVal = Math.max(...dist.map((d) => d.value));
+  .map((d, i) => {
+    const anio = totalSamples(d);
+    const mes = Math.max(1, Math.round(anio * (0.14 + (i % 4) * 0.025)));
+    return { name: d.nombre, code: `ORPHA:${d.orpha}`, anio, mes, slug: d.slug, color: palette[i % palette.length] };
+  })
+  .sort((a, b) => b.anio - a.anio);
+const mesMax = Math.max(...dist.map((d) => d.mes));
 
 const activity = [
   { type: "registro", who: "Lab. Genómica BCN", text: "registró 24 muestras de Síndrome de Rett", time: "hace 12 min", color: "var(--teal)" },
@@ -78,26 +83,26 @@ const actIcon: Record<string, string> = {
       <div class="panel__head">
         <div>
           <h2>Distribución de muestras por enfermedad</h2>
-          <span class="panel__sub">Top 6 · red completa</span>
+          <span class="panel__sub" id="dist-sub">Top 6 · este mes</span>
         </div>
         <div class="seg">
-          <button class="seg__btn is-active">Mes</button>
-          <button class="seg__btn">Año</button>
+          <button class="seg__btn is-active" data-series="mes">Mes</button>
+          <button class="seg__btn" data-series="anio">Año</button>
         </div>
       </div>
 
       <div class="bars">
         {
           dist.map((d) => (
-            <a class="bar-row" href={`${base}ficha/${d.slug}`}>
+            <a class="bar-row" href={`${base}ficha/${d.slug}`} data-mes={d.mes} data-anio={d.anio}>
               <div class="bar-row__label">
                 <strong>{d.name}</strong>
                 <code>{d.code}</code>
               </div>
               <div class="bar-track">
-                <div class="bar-fill" style={`width:${(d.value / maxVal) * 100}%; background:${d.color}`} />
+                <div class="bar-fill" style={`width:${(d.mes / mesMax) * 100}%; background:${d.color}`} />
               </div>
-              <span class="bar-row__val">{d.value}</span>
+              <span class="bar-row__val">{d.mes}</span>
             </a>
           ))
         }
@@ -304,6 +309,7 @@ const actIcon: Record<string, string> = {
     border-radius: 999px;
     min-width: 6px;
     animation: grow 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
+    transition: width 0.5s cubic-bezier(0.22, 1, 0.36, 1);
   }
   @keyframes grow {
     from { transform: scaleX(0); transform-origin: left; }
@@ -365,3 +371,30 @@ const actIcon: Record<string, string> = {
     }
   }
 </style>
+
+<script>
+  // Conmutador Mes / Año del gráfico de distribución.
+  const segBtns = Array.from(document.querySelectorAll<HTMLButtonElement>(".seg__btn"));
+  const rows = Array.from(document.querySelectorAll<HTMLAnchorElement>(".bar-row"));
+  const sub = document.querySelector<HTMLElement>("#dist-sub");
+
+  function render(series: "mes" | "anio") {
+    const max = Math.max(...rows.map((r) => Number(r.dataset[series]) || 0)) || 1;
+    rows.forEach((r) => {
+      const v = Number(r.dataset[series]) || 0;
+      const fill = r.querySelector<HTMLElement>(".bar-fill");
+      const val = r.querySelector<HTMLElement>(".bar-row__val");
+      if (fill) fill.style.width = `${(v / max) * 100}%`;
+      if (val) val.textContent = String(v);
+    });
+    if (sub) sub.textContent = series === "mes" ? "Top 6 · este mes" : "Top 6 · red completa";
+  }
+
+  segBtns.forEach((b) =>
+    b.addEventListener("click", () => {
+      segBtns.forEach((x) => x.classList.remove("is-active"));
+      b.classList.add("is-active");
+      render((b.dataset.series as "mes" | "anio") ?? "mes");
+    }),
+  );
+</script>
