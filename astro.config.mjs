@@ -1,11 +1,10 @@
 import { defineConfig } from 'astro/config';
 
-// IMPORTANTE para GitHub Pages:
-//  - `site`: cámbialo por https://TU-USUARIO.github.io
-//  - `base`: debe coincidir con el nombre del repositorio (aquí "BioRare").
-//    Si publicas en un repo distinto, ajústalo. Si usas un dominio propio
-//    o un repo tipo TU-USUARIO.github.io, pon base: '/'.
+// GitHub Pages (usuario JStewardGT · repo BioRare):
+//  - `site`: origen de GitHub Pages del usuario (en minúsculas).
+//  - `base`: debe coincidir con el nombre del repositorio.
+//    Si migras a un repo tipo usuario.github.io o dominio propio, pon base: '/'.
 export default defineConfig({
-  site: 'https://TU-USUARIO.github.io',
+  site: 'https://jstewardgt.github.io',
   base: '/BioRare',
 });
